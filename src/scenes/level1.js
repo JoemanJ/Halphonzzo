@@ -22,6 +22,7 @@ export default class level1 extends Phaser.Scene{
         //Adiciona o chao no grupo das plataformas
         platforms.create(160, 584, 'chao');
         platforms.create(160, 16, 'chao');
+        platforms.create(320, 380, 'chao');
         
         //adiciona colisao entre o player e as plataformas
         this.physics.add.collider(this.player, platforms);
@@ -40,9 +41,10 @@ export default class level1 extends Phaser.Scene{
         //pulo
         if (this.keys.up.isDown && //cima apertado E...
             (
-                (this.player.body.touching.down && Math.sign(this.physics.world.gravity.y)) || //gravidade pra baixo e player tocando o chao OU...
-                (this.player.body.touching.up && -1 * Math.sign(this.physics.world.gravity.y)) //gravidade pra cima e player tocando o teto
-            )){
+                (this.player.body.touching.down && Math.sign(this.physics.world.gravity.y) == 1) || //gravidade pra baixo e player tocando o chao OU...
+                (this.player.body.touching.up && Math.sign(this.physics.world.gravity.y) == -1) //gravidade pra cima e player tocando o teto
+            )
+            ){
             this.player.setVelocityY(Math.sign(this.physics.world.gravity.y) * -500); //muda a velocidade do player no sentido contrário à gravidade
         }
 
