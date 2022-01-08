@@ -49,11 +49,13 @@ export default class level1 extends Phaser.Scene{
         //direita
         if (this.keys.right.isDown){
             this.player.setVelocityX(125);
+            this.player.flipX = false;
         }
 
         //esquerda
         else if(this.keys.left.isDown){
             this.player.setVelocityX(-125)
+            this.player.flipX = true;
         }
 
         //parado
@@ -64,6 +66,7 @@ export default class level1 extends Phaser.Scene{
         //Mudar a gravidade
         if (this.keys.space.isDown && this.gravFlag == 1){
             this.physics.world.gravity.y *= -1;
+            this.player.flipY = !this.player.flipY;
             this.gravFlag = 0;
         }
     }
