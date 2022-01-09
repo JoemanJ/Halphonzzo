@@ -13,25 +13,51 @@ export default class level1 extends Phaser.Scene{
     }
     
     create(){
-        //cria o objeto player
+        //CRIAÇÃO DE OBJETOS
+        //cria o objeto player e faz ele colidir com as bordas do mundo
         this.player = this.physics.add.image(16,500,'halphonzzo');
+        this.player.body.collideWorldBounds = true
         
         //cria o grupo das plataformas
         this.platforms = this.physics.add.staticGroup();
         
-        //Adiciona o chao no grupo das plataformas
-        this.platforms.create(160, 584, 'chao');
-        this.platforms.create(160, 16, 'chao');
-        this.platforms.create(320, 380, 'chao');
-        
+        //cria o chão e o teto como tilesprites e adiciona ao grupo das pĺataformas
+        const teto = this.add.tileSprite(400, 16, 800, 32, 'chao');
+        this.platforms.add(teto);
+        const chao = this.add.tileSprite(400, 584, 800, 32, 'chao');
+        this.platforms.add(chao);
+
+
+
+
+
+
+        //CRIAÇÃO DE COLISÕES
+
         //adiciona colisao entre o player e as plataformas
         this.physics.add.collider(this.player, this.platforms);
         
+
+
+
+
+
+
+
+
+
+        //ETC
+
         //cria o controle de inputs
         this.keys = this.input.keyboard.createCursorKeys()
 
         //flag de mudança de gravidade
         this.gravFlag = 0;
+
+        this.cameras.main.startFollow(this.player)
+        this.cameras.main.setFollowOffset(0, 200)
+        this.cameras.main.setBounds(0, 0, 1000, 600)
+        this.cameras.main.setDeadzone(0, this.scale.height);
     }
     
     update(){
@@ -50,6 +76,7 @@ export default class level1 extends Phaser.Scene{
             }
         }
 
+        // CODIGO DE PULO ANTERIOR (não resetava o flag de gravidade)
         // if (this.keys.up.isDown && //cima apertado E...
         //     (
         //         (this.player.body.touching.down && Math.sign(this.physics.world.gravity.y) == 1) || //gravidade pra baixo e player tocando o chao OU...
@@ -84,8 +111,4 @@ export default class level1 extends Phaser.Scene{
         }
     }
 
-    setGravFlag(){
-        this.gravFlag = 1;
-        console.log("teste");
-    }
 }
