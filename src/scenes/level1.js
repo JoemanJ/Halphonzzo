@@ -10,17 +10,28 @@ export default class level1 extends Phaser.Scene{
         //Carrega as imagens
         this.load.image('halphonzzo', './src/sprites/halphonzzo.png');
         this.load.image('chao', './src/sprites/chao.png');
+        this.load.image('tomato', './src/sprites/tomato.png');
     }
     
     create(){
+
+        this.physics.world.setBounds(0, 0, 1000, 600);
+
         //CRIAÇÃO DE OBJETOS
         //cria o objeto player e faz ele colidir com as bordas do mundo
         this.player = this.physics.add.image(16,500,'halphonzzo');
         this.player.body.collideWorldBounds = true
-        
+
         //cria o grupo das plataformas
         this.platforms = this.physics.add.staticGroup();
         
+        //Cria o grupo dos inimigos
+        this.tomatos = this.physics.add.staticGroup();
+
+        const tomato = this.add.image(100, 500, 'tomato');
+        this.tomatos.add(tomato);
+        
+
         //cria o chão e o teto como tilesprites e adiciona ao grupo das pĺataformas
         const teto = this.add.tileSprite(400, 16, 800, 32, 'chao');
         this.platforms.add(teto);
@@ -32,11 +43,16 @@ export default class level1 extends Phaser.Scene{
 
 
 
+
+
+
+
         //CRIAÇÃO DE COLISÕES
 
         //adiciona colisao entre o player e as plataformas
-        this.physics.add.collider(this.player, this.platforms);
+        this.collider_player_platforms = this.physics.add.collider(this.player, this.platforms);
         
+        this.collider_player_tomatos = this.physics.add.collider(this.player, this.tomatos, this.killHalphonzzo, undefined, this);
 
 
 
@@ -109,6 +125,17 @@ export default class level1 extends Phaser.Scene{
             this.player.flipY = !this.player.flipY;
             this.gravFlag = 0;
         }
+    }
+
+    //ANIMAÇÃO DE MORTE
+    killHalphonzzo(){
+        this.player.setAngle(180);
+        this.player.setCollideWorldBounds(false);
+        this.player.setVelocityY(-500);
+        this.physics.world.removeCollider(this.collider_player_platforms);
+        this.physics.world.removeCollider(this.collider_player_tomatos);
+        this.input.keyboard.destroy()
+        this.player.body.velocity
     }
 
 }
