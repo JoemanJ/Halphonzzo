@@ -129,13 +129,14 @@ export default class level1 extends Phaser.Scene{
 
     //ANIMAÇÃO DE MORTE
     killHalphonzzo(){
+        this.physics.world.gravity.y = 1000;
+        this.player.flipY = false;
         this.player.setAngle(180);
         this.player.setCollideWorldBounds(false);
         this.player.setVelocityY(-500);
         this.physics.world.removeCollider(this.collider_player_platforms);
         this.physics.world.removeCollider(this.collider_player_tomatos);
         this.input.keyboard.destroy()
-        this.player.body.velocity
     }
 
 }
