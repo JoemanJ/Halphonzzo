@@ -6,6 +6,8 @@ var player;
 var enemies;
 let flipFlag = false;
 let gravityFlag = false;
+
+
 export default class level1 extends Phaser.Scene{
     constructor(){
         super('level1')
@@ -15,8 +17,6 @@ export default class level1 extends Phaser.Scene{
         this.load.image('chao','./src/sprites/chao.png')
         this.load.image('halphonzzo','./src/sprites/halphonzzo.png')
         this.load.image('tomate', './src/sprites/tomato.png')
-
-
     }
     
     create(){
@@ -54,15 +54,6 @@ export default class level1 extends Phaser.Scene{
             tomato.body.setAllowGravity(false);
             tomato.body.setCollideWorldBounds(true);
 
-        
-
-        
-        
-        
-        
-        
-        
-        
     }
 
     update(){
@@ -72,7 +63,6 @@ export default class level1 extends Phaser.Scene{
                 player.flipX = true;
                 flipFlag = true;
             }
-
         }
         else if(cursors.right.isDown){
             player.setVelocityX(160)
@@ -88,7 +78,6 @@ export default class level1 extends Phaser.Scene{
             player.setVelocityY(-500);
         }
 
-        
         if(cursors.space.isDown){
 
             //gravidade está para baixo
@@ -103,10 +92,7 @@ export default class level1 extends Phaser.Scene{
                 this.physics.world.gravity.y *=-1;
                 player.flipY = false;
                 gravityFlag = false;
-                }
+            }
         }
-
-
-
     }
 }
