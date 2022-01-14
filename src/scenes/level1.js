@@ -11,18 +11,18 @@ export default class level1 extends Phaser.Scene{
 
     preload(){
         //Carrega as imagens
-        this.load.image('halphonzzo', './src/sprites/halphonzzo.png');
-        this.load.image('chao', './src/sprites/chao.png');
-        this.load.image('tomato', './src/sprites/tomato.png');
+        this.load.image('chao', './src/sprites/pix_chao.png');
+        this.load.image('halphonzzo', './src/sprites/pix_player.png');
+        this.load.image('tomato', './src/sprites/pix_tomato.png');
     }
     
     create(){
 
-        this.physics.world.setBounds(0, 0, 1000, 600);
+        this.physics.world.setBounds(0, 0, 1000, 300);
 
         //CRIAÇÃO DE OBJETOS
         //cria o objeto player e faz ele colidir com as bordas do mundo
-        this.player = this.physics.add.image(16,500,'halphonzzo');
+        this.player = this.physics.add.image(16,122,'halphonzzo').setScale(1, 2);
         this.player.body.collideWorldBounds = true
 
         //cria o grupo das plataformas
@@ -32,14 +32,14 @@ export default class level1 extends Phaser.Scene{
         this.enemies = this.add.group();
 
         //Cria o tomato voador
-        const tomato = this.physics.add.image(200, 320, 'tomato');
+        const tomato = this.physics.add.image(200, 75, 'tomato');
         tomato.body.setAllowGravity(false);
         this.enemies.add(tomato);
 
         //cria o chão e o teto como tilesprites e adiciona ao grupo das pĺataformas
-        const teto = this.add.tileSprite(400, 16, 800, 32, 'chao');
+        const teto = this.add.tileSprite(0, 4, 800, 8, 'chao');
         this.platforms.add(teto);
-        const chao = this.add.tileSprite(400, 584, 800, 32, 'chao');
+        const chao = this.add.tileSprite(0, 296, 800, 8, 'chao');
         this.platforms.add(chao);
 
 
@@ -76,9 +76,10 @@ export default class level1 extends Phaser.Scene{
 
         //Configuração da câmera
         this.cameras.main.startFollow(this.player)
-        this.cameras.main.setFollowOffset(0, 200)
-        this.cameras.main.setBounds(0, 0, 1000, 600)
-        this.cameras.main.setDeadzone(0, this.scale.height);
+        this.cameras.main.setFollowOffset(0, 0)
+        this.cameras.main.setBounds(0, 0, 1000, 150)
+        this.cameras.main.setDeadzone(0, 0);
+        this.cameras.main.setZoom(2);
     }
     
     update(){
@@ -107,13 +108,13 @@ export default class level1 extends Phaser.Scene{
 
             //direita
             if (this.keys.right.isDown){
-                this.player.setVelocityX(125);
+                this.player.setVelocityX(100);
                 this.player.flipX = false;
             }
 
             //esquerda
             else if(this.keys.left.isDown){
-                this.player.setVelocityX(-125)
+                this.player.setVelocityX(-100)
                 this.player.flipX = true;
             }
 
@@ -172,7 +173,7 @@ export default class level1 extends Phaser.Scene{
 
     handleHit(player, enemy){
         if(
-            ( (player.body.y + 54) > enemy.body.y && !this.gravInvertida) || //inimigo acima e gravidade para baixo
+            ( (player.body.y + player.body.height - 10) > enemy.body.y && !this.gravInvertida) || //inimigo acima e gravidade para baixo
             ( (player.body.y + 10) < (enemy.body.y + enemy.body.height) && this.gravInvertida) //Inimigo abaixo e gravidade para cima
             ){
                 //ANIMAÇÃO DE MORTE
