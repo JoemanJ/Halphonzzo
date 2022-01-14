@@ -6,6 +6,8 @@ export default class level1 extends Phaser.Scene{
     }
     
     debugMode = false;
+    gravInvertida = false;
+    forcaPulo = -500;
 
     preload(){
         //Carrega as imagens
@@ -93,13 +95,13 @@ export default class level1 extends Phaser.Scene{
         if(!this.debugMode){
             //flag de gravidade e pulo
             if(
-                (this.player.body.touching.down && Math.sign(this.physics.world.gravity.y) == 1) || //gravidade pra baixo e player tocando o chao OU...
-                (this.player.body.touching.up && Math.sign(this.physics.world.gravity.y) == -1) //gravidade pra cima e player tocando o teto
+                (this.player.body.touching.down && !this.gravInvertida) || //gravidade pra baixo e player tocando o chao OU...
+                (this.player.body.touching.up && this.gravInvertida) //gravidade pra cima e player tocando o teto
             ){
                 this.gravFlag = true; //Reseta o flag de gravidade
                 
                 if(this.keys.up.isDown){ //Cima apertado
-                    this.player.setVelocityY(Math.sign(this.physics.world.gravity.y) * -500); //Pulo
+                    this.player.setVelocityY(this.forcaPulo); //Pulo
                 }
             }
 
@@ -122,9 +124,7 @@ export default class level1 extends Phaser.Scene{
 
             //Mudar a gravidade
             if (this.keys.space.isDown && this.gravFlag){
-                this.physics.world.gravity.y *= -1;
-                this.player.flipY = !this.player.flipY;
-                this.gravFlag = false;
+                this.invertGravity();
             }
 
         }
@@ -172,8 +172,8 @@ export default class level1 extends Phaser.Scene{
 
     handleHit(player, enemy){
         if(
-            ( (player.body.y + 54) > enemy.body.y && Math.sign(this.physics.world.gravity.y) == 1) || //inimigo acima e gravidade para baixo
-            ( (player.body.y + 10) < (enemy.body.y + enemy.body.height) && Math.sign(this.physics.world.gravity.y) == -1) //Inimigo abaixo e gravidade para cima
+            ( (player.body.y + 54) > enemy.body.y && !this.gravInvertida) || //inimigo acima e gravidade para baixo
+            ( (player.body.y + 10) < (enemy.body.y + enemy.body.height) && this.gravInvertida) //Inimigo abaixo e gravidade para cima
             ){
                 //ANIMAÇÃO DE MORTE
                 this.killPlayer();
@@ -187,16 +187,17 @@ export default class level1 extends Phaser.Scene{
             enemy.setVelocityY(-200);
             enemy.setAccelerationY(1000);
 
-            player.setVelocityY(Math.sign(this.physics.world.gravity.y) * -500); //Pulo do player
+            player.setVelocityY(this.forcaPulo); //Pulo do player
             this.gravFlag = true //Reset do flag de gravidade
         }
     }
 
     killPlayer(){
+        this.physics.world.gravity.y = 1000;
         this.input.keyboard.destroy() //Não pode se mover após a morte
 
-        this.player.flipY = false;
-        this.player.setAngle(180);
+        this.player.flipY = true;
+        this.player.flipX = true;
 
         this.collider_player_platforms.destroy(); // Não colide com nada após a morte
         this.collider_player_enemies.destroy(); 
@@ -205,4 +206,14 @@ export default class level1 extends Phaser.Scene{
         this.player.setVelocityY(-500); //Cai para baixo independente do sentido da gravidade
     }
 
+    invertGravity(){
+        this.physics.world.gravity.y *= -1;
+        this.gravInvertida = !this.gravInvertida;
+        this.gravFlag = false;
+        this.forcaPulo *= -1;
+        this.player.flipY = !this.player.flipY;
+        this.enemies.getChildren().forEach(function(enemy){
+            enemy.flipY=!enemy.flipY;
+        })
+    }
 }
