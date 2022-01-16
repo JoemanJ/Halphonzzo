@@ -18,7 +18,7 @@ export default class level1 extends Phaser.Scene{
     
     create(){
 
-        this.physics.world.setBounds(0, 0, 1000, 300);
+        this.physics.world.setBounds(0, 0, 3000, 300);
 
         //CRIAÇÃO DE OBJETOS
         //cria o objeto player e faz ele colidir com as bordas do mundo
@@ -26,7 +26,8 @@ export default class level1 extends Phaser.Scene{
         this.player.body.collideWorldBounds = true
 
         //cria o grupo das plataformas
-        this.platforms = this.physics.add.staticGroup();
+        this.platforms = this.physics.add.group();
+        this.movPlatforms = this.physics.add.group();
         
         //Cria o grupo dos inimigos
         this.enemies = this.add.group();
@@ -37,10 +38,32 @@ export default class level1 extends Phaser.Scene{
         this.enemies.add(tomato);
 
         //cria o chão e o teto como tilesprites e adiciona ao grupo das pĺataformas
-        const teto = this.add.tileSprite(0, 4, 800, 8, 'chao');
+        const teto = this.add.tileSprite(0, 4, 3000, 8, 'chao');
         this.platforms.add(teto);
-        const chao = this.add.tileSprite(0, 296, 800, 8, 'chao');
+        const chao = this.add.tileSprite(0, 296, 3000, 8, 'chao');
         this.platforms.add(chao);
+
+        this.time.now
+
+        this.platformList=[
+            {position:{x:200, y:200}, movement:"none"},
+            {position:{x:350, y:200}, movement:"vertical", loopTime:2000},
+            {position:{x:500, y:200}, movement:"horizontal", loopTime:2000},
+        ]
+
+        for(const platformConfig of this.platformList){
+            const platform = this.add.tileSprite(platformConfig.position.x, platformConfig.position.y, 100, 4, 'chao');
+            platform.movement = platformConfig.movement;
+            platform.loopTime = platformConfig.loopTime;
+            this.platforms.add(platform, true);
+        }
+
+        
+
+        this.platforms.getChildren().forEach(function(platform){
+            platform.body.setAllowGravity(false);
+            platform.body.setImmovable(true);
+        })
 
 
 
@@ -89,6 +112,8 @@ export default class level1 extends Phaser.Scene{
 
         //Movimentação dos inimigos
         this.handleEnemyMovement(this.time.now);
+
+        this.handlePlatformMovement(this.time.now);
     }
 
     handlePlayerMovement(){
@@ -215,6 +240,38 @@ export default class level1 extends Phaser.Scene{
         this.player.flipY = !this.player.flipY;
         this.enemies.getChildren().forEach(function(enemy){
             enemy.flipY=!enemy.flipY;
+        })
+    }
+
+    handlePlatformMovement(time){
+        this.platforms.getChildren().forEach(function (platform){
+            switch (platform.movement){
+                case "horizontal":
+                    if (time % platform.loopTime < platform.loopTime/2){
+                        platform.body.setAccelerationX(100);
+                    }
+                    else{
+                        platform.body.setAccelerationX(-100);
+                    }
+                    break;
+
+                case "vertical":
+                    platform.body.setVelocityY(Math.sin(time/500)*150);
+                    
+                    // if (!time%platform.loopTime){
+                    //     platform.setAccelerationY(platform.setAccelerationY * -1); //PARADO
+                    // }
+
+                    // platform.body.setVelocityY(((time % platform.loopTime) - platform.loopTime/2 ) /10) //PULA-PULA
+
+                    // if (time % platform.loopTime < platform.loopTime/2){  //TEMPLATE
+                    //     platform.body.setAccelerationY(-100);
+                    // }
+                    // else{
+                    //     platform.body.setAccelerationY(100);
+                    // }
+                    break;
+            }
         })
     }
 }
