@@ -6,6 +6,7 @@ export default new Phaser.Game({
     type: Phaser.AUTO,
     width: 800,
     height: 600,
+    backgroundColor: '#129acc',
     scene: level1,
     physics: {
         default: 'arcade',

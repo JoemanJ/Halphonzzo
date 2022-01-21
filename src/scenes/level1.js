@@ -4,10 +4,14 @@ import Phaser from '../lib/phaser.js'
 var player;
 var platforms;
 var movPlatforms;
-var platformList;
+var platformList, boundsList;
 var enemies;
 var enemyList;
 var keys;
+
+
+
+var morteSound;
 
 export default class level1 extends Phaser.Scene{
     constructor(){
@@ -24,16 +28,25 @@ export default class level1 extends Phaser.Scene{
         this.load.image('chao', './src/sprites/pix_chao.png');
         this.load.image('halphonzzo', './src/sprites/pix_player.png');
         this.load.image('tomato', './src/sprites/pix_tomato.png');
+
+        //carrega sons
+        this.load.audio('morte', './src/sounds/somDeMort.mp3');
     }
     
     create(){
-
         this.physics.world.setBounds(0, 0, 3000, 300);
+
+
+        //adiciona sons ao jogo
+        morteSound = this.sound.add('morte');
+
 
         //CRIAÇÃO DE OBJETOS
         //cria o objeto player e faz ele colidir com as bordas do mundo
-        player = this.physics.add.image(16,122,'halphonzzo').setScale(1, 2);
+        player = this.physics.add.image(16,122,'halphonzzo').setScale(0.02, 0.02);
             player.body.collideWorldBounds = true;
+            player.body.setSize(700,1500,false);
+            player.body.setOffset(700,100);
 
         //cria o grupo das plataformas(dinâmico)
         platforms = this.physics.add.group();
@@ -47,16 +60,25 @@ export default class level1 extends Phaser.Scene{
         // tomato.body.setAllowGravity(false);
         // this.enemies.add(tomato);
 
-        //cria o chão e o teto como tilesprites e adiciona ao grupo das pĺataformas
-        const teto = this.add.tileSprite(0, 4, 3000, 8, 'chao');
-        platforms.add(teto);
-        const chao = this.add.tileSprite(0, 296, 3000, 8, 'chao');
-        platforms.add(chao);
-
+        //array usado para plataformas estáticas(tileSprites)
+        boundsList =[
+            {position:{x:0, y:4}, gravity: false, movement:"none", width: 200, height: 8},
+            {position:{x:0, y:296}, gravity: false, movement:"none", width: 200, height: 8},
+            {position:{x:300, y:30}, gravity: false, movement:"none", width:80, height: 8}
+        ]
+        
+        //configurações de cada platforma do array boundsList
+        for(const boundConfig of boundsList){
+            const bound = this.add.tileSprite(boundConfig.position.x,boundConfig.position.y,boundConfig.width,boundConfig.height,'chao');
+            bound.position = boundConfig.position;
+            bound.movement = boundConfig.movement;
+            platforms.add(bound);
+        }
+        
         this.time.now 
 
         enemyList=[
-            {position:{x:200, y:75}, gravity:false, movement: "horizontal", stateTime: 2000, speed:75}
+            {position:{x:200, y:175}, gravity:false, movement: "horizontal", stateTime: 2000, speed:75}
         ]
 
         //LISTA DE INIMIGOS (50%) E PLATAFORMAS (100%)
@@ -70,34 +92,31 @@ export default class level1 extends Phaser.Scene{
         }
 
         platformList=[
-            {position:{x:200, y:200}, movement:"none"},
-            {position:{x:350, y:200}, movement:"vertical", positionDelta:80},
-            {position:{x:500, y:200}, movement:"horizontal", positionDelta:150},
-            {position:{x:200, y:150}, movement:"circle", positionDelta:100},
+            //{position:{x:300, y:30}, movement:"none"},
+            //{position:{x:350, y:200}, movement:"vertical", positionDelta:80},
+            //{position:{x:500, y:200}, movement:"horizontal", positionDelta:150},
+            //{position:{x:200, y:150}, movement:"circle", positionDelta:100}
         ]
 
         for(const platformConfig of platformList){
-            const platform = this.add.tileSprite(platformConfig.position.x, platformConfig.position.y, 100, 4, 'chao');
+            const platform = this.physics.add.sprite(platformConfig.position.x, platformConfig.position.y, 'chao');
             platform.position = platformConfig.position;
             platform.movement = platformConfig.movement;
             platform.positionDelta = platformConfig.positionDelta;
+            platform.setScale(10,1);
             platforms.add(platform, true);
         }
-
-        
 
         platforms.getChildren().forEach(function(platform){
             platform.body.setAllowGravity(false);
             platform.body.setImmovable(true);
+            platform.body.setFrictionX(1);
         })
-
-
-
 
         //CRIAÇÃO DE COLISÕES
 
         //adiciona colisao entre o player e as plataformas
-        this.collider_player_platforms = this.physics.add.collider(player, platforms);
+        this.collider_player_platforms = this.physics.add.collider(player, platforms,this.handleGravityControl,undefined,this);
         
         this.collider_player_enemies = this.physics.add.overlap(player, enemies, this.handleHit, undefined, this);
 
@@ -123,7 +142,7 @@ export default class level1 extends Phaser.Scene{
         this.handlePlayerMovement();
 
         //Movimentação dos inimigos
-        this.handleEnemyMovement(this.time.now);
+        //this.handleEnemyMovement(this.time.now);
 
         this.handlePlatformMovement(this.time.now);
     }
@@ -131,42 +150,30 @@ export default class level1 extends Phaser.Scene{
     handlePlayerMovement(){
         //MOVIMENTO
         if(!this.debugMode){
-            //flag de gravidade e pulo
-            if(
-                (player.body.touching.down && !this.gravInvertida) || //gravidade pra baixo e player tocando o chao OU...
-                (player.body.touching.up && this.gravInvertida) //gravidade pra cima e player tocando o teto
-            ){
-                this.gravFlag = true; //Reseta o flag de gravidade
-                
-                if(keys.up.isDown){ //Cima apertado
-                    player.setVelocityY(this.forcaPulo); //Pulo
-                }
-            }
-
             //direita
             if (keys.right.isDown){
                 player.setVelocityX(100);
                 player.flipX = false;
+                player.body.setOffset(700,100);
             }
-
             //esquerda
             else if(keys.left.isDown){
                 player.setVelocityX(-100)
                 player.flipX = true;
+                player.body.setOffset(200,100);
+                
             }
-
             //parado
             else{
                 player.setVelocityX(0);
             }
-
             //Mudar a gravidade
-            if (keys.space.isDown && this.gravFlag){
+            if (keys.space.isDown && this.gravFlag > 0){
+                this.gravFlag--;
                 this.invertGravity();
+                keys.space.reset();
             }
-
         }
-
         else{ //Modo debug provisório
             if(keys.up.isDown){
                 player.setVelocityY(-100);
@@ -226,14 +233,16 @@ export default class level1 extends Phaser.Scene{
             enemy.setVelocityX(0); //Pulinho
             enemy.setVelocityY(-200);
             enemy.setAccelerationY(1000);
-
+            this.gravFlag++;
             player.setVelocityY(this.forcaPulo); //Pulo do player
-            this.gravFlag = true //Reset do flag de gravidade
+            
         }
     }
 
     //morte do jogador
     killPlayer(){
+
+        morteSound.play();
         this.physics.world.gravity.y = 1000;
         this.input.keyboard.destroy() //Não pode se mover após a morte
 
@@ -251,7 +260,7 @@ export default class level1 extends Phaser.Scene{
     invertGravity(){
         this.physics.world.gravity.y *= -1;
         this.gravInvertida = !this.gravInvertida;
-        this.gravFlag = false;
+        //this.gravFlag = false;
         this.forcaPulo *= -1;
         player.flipY = !player.flipY;
         enemies.getChildren().forEach(function(enemy){
@@ -266,11 +275,11 @@ export default class level1 extends Phaser.Scene{
         platforms.getChildren().forEach(function (platform){
             switch (platform.movement){
                 case "horizontal":
-                    platform.setX(platform.position.x + senTempo*platform.positionDelta);
+                    platform.setVelocityX(senTempo*platform.positionDelta);
                     break;
 
                 case "vertical":
-                    platform.setY(platform.position.y + senTempo*platform.positionDelta);
+                    platform.setVelocityY(senTempo*platform.positionDelta);
                     
                     // if (!time%platform.loopTime){
                     //     platform.setAccelerationY(platform.setAccelerationY * -1); //PARADO
@@ -287,10 +296,21 @@ export default class level1 extends Phaser.Scene{
                     break;
 
                 case "circle":
-                    platform.setX(platform.position.x + senTempo*platform.positionDelta);
-                    platform.setY(platform.position.y + cosTempo*platform.positionDelta);
+                    platform.setVelocityX(senTempo*platform.positionDelta);
+                    platform.setVelocityY(cosTempo*platform.positionDelta);
                     break;
             }
         })
     }
+
+    handleGravityControl(){
+        if(
+            (player.body.touching.down && !this.gravInvertida) || //gravidade pra baixo e player tocando o chao OU...
+            (player.body.touching.up && this.gravInvertida) //gravidade pra cima e player tocando o teto
+        ){
+            this.gravFlag = 2; //Reseta o flag de gravidade
+        }
+
+    }
+
 }
