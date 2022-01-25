@@ -1,15 +1,14 @@
 import Phaser from '../lib/phaser.js'
 
 //declaração dos objetos do jogo, variáveis globais.
-var player;
+var player, playerDead = false;
 var platforms;
 var movPlatforms;
 var platformList, boundsList;
 var enemies;
 var enemyList;
 var keys;
-
-
+var spikes, spikesList;
 
 var morteSound;
 
@@ -22,12 +21,12 @@ export default class level1 extends Phaser.Scene{
     gravInvertida = false;
     forcaPulo = -500;
 
-
     preload(){
-        //Carrega as imagens
+        //Carrega as imagens a serem utilizadas
         this.load.image('chao', './src/sprites/pix_chao.png');
         this.load.image('halphonzzo', './src/sprites/pix_player.png');
         this.load.image('tomato', './src/sprites/pix_tomato.png');
+        this.load.image('espinho', './src/sprites/dungeon/PNG/Details/stalagmite2.png');
 
         //carrega sons
         this.load.audio('morte', './src/sounds/somDeMort.mp3');
@@ -36,29 +35,25 @@ export default class level1 extends Phaser.Scene{
     create(){
         this.physics.world.setBounds(0, 0, 3000, 300);
 
-
         //adiciona sons ao jogo
         morteSound = this.sound.add('morte');
 
 
         //CRIAÇÃO DE OBJETOS
         //cria o objeto player e faz ele colidir com as bordas do mundo
-        player = this.physics.add.image(16,122,'halphonzzo').setScale(0.02, 0.02);
-            player.body.collideWorldBounds = true;
+        player = this.physics.add.image(25,130,'halphonzzo').setScale(0.02, 0.02);
             player.body.setSize(700,1500,false);
             player.body.setOffset(700,100);
 
         //cria o grupo das plataformas(dinâmico)
         platforms = this.physics.add.group();
         movPlatforms = this.physics.add.group();
+
+        //cria o grupo dos espinhos(dinâmico)
+        spikes = this.physics.add.group();
         
         //Cria o grupo dos inimigos(dinâmico)
         enemies = this.add.group();
-
-        //Cria o tomato voador
-        // const tomato = this.physics.add.image(200, 75, 'tomato');
-        // tomato.body.setAllowGravity(false);
-        // this.enemies.add(tomato);
 
         //array usado para plataformas estáticas(tileSprites)
         boundsList =[
@@ -72,8 +67,33 @@ export default class level1 extends Phaser.Scene{
             const bound = this.add.tileSprite(boundConfig.position.x,boundConfig.position.y,boundConfig.width,boundConfig.height,'chao');
             bound.position = boundConfig.position;
             bound.movement = boundConfig.movement;
-            platforms.add(bound);
+            platforms.add(bound, true);
         }
+
+        spikesList = [
+            {position:{x:200 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
+            {position:{x:220 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
+            {position:{x:240 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
+            {position:{x:260 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
+            {position:{x:280 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
+            {position:{x:300 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
+            {position:{x:320 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
+            {position:{x:340 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
+        ]
+
+        for(const spikeConfig of spikesList){
+            const spike = this.add.image(spikeConfig.position.x,spikeConfig.position.y,'espinho');
+            spike.position = spikeConfig.position;
+            spike.movement = spikeConfig.movement;
+            spikes.add(spike, true);
+        }
+        spikes.getChildren().forEach(function(spike){
+            spike.body.setAllowGravity(false);
+            spike.body.setSize(25,48);
+            spike.body.setOffset(20,8);
+            spike.body.setImmovable(true);
+        })
+
         
         this.time.now 
 
@@ -94,7 +114,7 @@ export default class level1 extends Phaser.Scene{
         platformList=[
             //{position:{x:300, y:30}, movement:"none"},
             //{position:{x:350, y:200}, movement:"vertical", positionDelta:80},
-            //{position:{x:500, y:200}, movement:"horizontal", positionDelta:150},
+            {position:{x:400, y:200}, movement:"horizontal", positionDelta:150},
             //{position:{x:200, y:150}, movement:"circle", positionDelta:100}
         ]
 
@@ -116,9 +136,12 @@ export default class level1 extends Phaser.Scene{
         //CRIAÇÃO DE COLISÕES
 
         //adiciona colisao entre o player e as plataformas
+
         this.collider_player_platforms = this.physics.add.collider(player, platforms,this.handleGravityControl,undefined,this);
         
-        this.collider_player_enemies = this.physics.add.overlap(player, enemies, this.handleHit, undefined, this);
+        this.collider_player_enemies = this.physics.add.overlap(player, enemies, this.handleEnemyHit, undefined, this);
+
+        this.collider_player_spikes = this.physics.add.collider(player,spikes, this.killPlayer,undefined,this);
 
         //ETC
 
@@ -134,7 +157,9 @@ export default class level1 extends Phaser.Scene{
         this.cameras.main.setBounds(0, 0, 1000, 150)
         this.cameras.main.setDeadzone(0, 0);
         this.cameras.main.setZoom(2);
+
     }
+
     
     update(){
 
@@ -145,6 +170,15 @@ export default class level1 extends Phaser.Scene{
         //this.handleEnemyMovement(this.time.now);
 
         this.handlePlatformMovement(this.time.now);
+        
+        this.checkPlayerOffBounds();
+    }
+
+    checkPlayerOffBounds(){
+        if(!this.cameras.main.worldView.contains(player.body.x,player.body.y) && !playerDead){
+            this.killPlayer();
+            this.scene.restart(level1);
+        }
     }
 
     handlePlayerMovement(){
@@ -217,7 +251,7 @@ export default class level1 extends Phaser.Scene{
     }
 
     //interaçoes do jogador com inimigos
-    handleHit(player, enemy){
+    handleEnemyHit(player, enemy){
         if(
             ( (player.body.y + player.body.height - 10) > enemy.body.y && !this.gravInvertida) || //inimigo acima e gravidade para baixo
             ( (player.body.y + 10) < (enemy.body.y + enemy.body.height) && this.gravInvertida) //Inimigo abaixo e gravidade para cima
@@ -250,10 +284,13 @@ export default class level1 extends Phaser.Scene{
         player.flipX = true;
 
         this.collider_player_platforms.destroy(); // Não colide com nada após a morte
-        this.collider_player_enemies.destroy(); 
-        player.setCollideWorldBounds(false);
-
+        this.collider_player_enemies.destroy();
+        this.collider_player_spikes.destroy(); 
+        
         player.setVelocityY(-500); //Cai para baixo independente do sentido da gravidade
+        playerDead = true;
+
+
     }
 
     //inversão gravitacional
