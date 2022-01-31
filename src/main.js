@@ -1,13 +1,14 @@
 import Phaser from './lib/phaser.js'
 
 import level1 from './scenes/level1.js'
+import aux from './scenes/aux.js';
 
-export default new Phaser.Game({
+const game = new Phaser.Game({
     type: Phaser.AUTO,
     width: 800,
     height: 600,
     backgroundColor: '#129acc',
-    scene: level1,
+    scene: [level1, aux],
     physics: {
         default: 'arcade',
         arcade: {
@@ -19,3 +20,4 @@ export default new Phaser.Game({
     }
 })
 
+export default game;

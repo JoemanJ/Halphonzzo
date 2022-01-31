@@ -1,4 +1,5 @@
 import Phaser from '../lib/phaser.js'
+import game from '../main.js'
 
 //declaração dos objetos do jogo, variáveis globais.
 var player, playerDead = false;
@@ -22,6 +23,7 @@ export default class level1 extends Phaser.Scene{
     forcaPulo = -500;
 
     preload(){
+        
         //Carrega as imagens a serem utilizadas
         this.load.image('chao', './src/sprites/pix_chao.png');
         this.load.image('halphonzzo', './src/sprites/pix_player.png');
@@ -176,10 +178,13 @@ export default class level1 extends Phaser.Scene{
 
     checkPlayerOffBounds(){
         if(!this.cameras.main.worldView.contains(player.body.x,player.body.y) && !playerDead){
-            this.killPlayer();
-            //this.scene.restart('level1');
-            this.scene.scenes[0].restart('level1');
+            //this.killPlayer();
+            this.restartScene();
         }
+    }
+
+    restartScene(){
+        this.scene.restart;
     }
 
     handlePlayerMovement(){
