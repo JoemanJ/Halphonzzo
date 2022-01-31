@@ -9,8 +9,8 @@ var enemies;
 var enemyList;
 var keys;
 var spikes, spikesList;
-
 var morteSound;
+
 
 export default class level1 extends Phaser.Scene{
     constructor(){
@@ -177,7 +177,8 @@ export default class level1 extends Phaser.Scene{
     checkPlayerOffBounds(){
         if(!this.cameras.main.worldView.contains(player.body.x,player.body.y) && !playerDead){
             this.killPlayer();
-            this.scene.restart(level1);
+            //this.scene.restart('level1');
+            this.scene.scenes[0].restart('level1');
         }
     }
 
