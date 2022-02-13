@@ -324,6 +324,11 @@ export default class level1 extends Phaser.Scene{
         player.setVelocityY(-500); //Cai para baixo independente do sentido da gravidade
         playerDead = true;
 
+        this.time.addEvent({delay: 2000, callbackScope: this, callback: function() {
+            this.scene.restart();
+            this.input.keyboard.enabled=true;
+        }, args: [this]});
+
 
     }
 
