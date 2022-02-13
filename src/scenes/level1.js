@@ -85,9 +85,9 @@ export default class level1 extends Phaser.Scene{
         ]
 
         for(const hazardConfig of hazardsList){
-            const hazard = this.add.image(spikeConfig.x,spikeConfig.y,hazardConfig.tile);
-            hazard.position.x = hazardConfig.x;
-            hazard.position.y = hazardConfig.y;
+            const hazard = this.add.image(hazardConfig.x, hazardConfig.y, hazardConfig.tile);
+            hazard.x = hazardConfig.x;
+            hazard.y = hazardConfig.y;
             hazard.movement = hazardConfig.movement;
             hazards.add(hazard, true);
         }
@@ -100,7 +100,7 @@ export default class level1 extends Phaser.Scene{
         })
 
         enemyList=[
-            {x:200, y:175, gravity:false, movement: "horizontal", stateTime: 2000, speed:75}
+            {type:'tomate', x:200, y:175, gravity:false, movement: "horizontal", stateTime: 2000, speed:75}
         ]
 
         //LISTA DE INIMIGOS (50%) E PLATAFORMAS (100%)
@@ -139,9 +139,9 @@ export default class level1 extends Phaser.Scene{
         ]
 
         for(const platformConfig of platformList){
-            const platform = this.physics.add.sprite(platformConfig.position.x, platformConfig.position.y, 'chao');
-            platform.position.x = platformConfig.x;
-            platform.position.y = platformConfig.y;
+            const platform = this.physics.add.sprite(platformConfig.x, platformConfig.y, 'chao');
+            platform.x = platformConfig.x;
+            platform.y = platformConfig.y;
             platform.movement = platformConfig.movement;
             platform.positionDelta = platformConfig.positionDelta;
             platform.setScale(10,1);
