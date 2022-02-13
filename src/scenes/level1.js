@@ -1,5 +1,7 @@
 import Phaser from '../lib/phaser.js'
 import game from '../main.js'
+import Tomate from '../Classes/tomate.js'
+import Azeitona from '../Classes/azeitona.js'
 
 //declaração dos objetos do jogo, variáveis globais.
 var player, playerDead = false;
@@ -28,7 +30,7 @@ export default class level1 extends Phaser.Scene{
         //Carrega as imagens a serem utilizadas
         this.load.image('chao', './src/sprites/pix_chao.png');
         this.load.image('halphonzzo', './src/sprites/pix_player.png');
-        this.load.image('tomato', './src/sprites/pix_tomato.png');
+        this.load.image('tomate', './src/sprites/pix_tomato.png');
         this.load.image('espinho', './src/sprites/dungeon/PNG/Details/stalagmite2.png');
         this.load.image('lump', './src/sprites/lump.png');
         this.load.image('azeitona', './src/sprites/azeitona.png');
@@ -100,10 +102,11 @@ export default class level1 extends Phaser.Scene{
         })
 
         enemyList=[
-            {type:'tomate', x:200, y:175, gravity:false, movement: "horizontal", stateTime: 2000, speed:75}
+            {type:'tomate', x:200, y:175, gravity:false, movement: "horizontal", stateTime: 2000, speed:75},
+            {type:'azeitona', x:80, y:175, gravity:true, movement: "none", stateTime: 2000, speed:75},
         ]
 
-        //LISTA DE INIMIGOS (50%) E PLATAFORMAS (100%)
+        //LISTA DE INIMIGOS
         for(const enemyConfig of enemyList){
             let enemy;
             let behavior;
@@ -131,6 +134,7 @@ export default class level1 extends Phaser.Scene{
                 }
         }
 
+        //LISTA DE PLATAFORMAS
         platformList=[
             //{position:{x:300, y:30}, movement:"none"},
             //{position:{x:350, y:200}, movement:"vertical", positionDelta:80},
@@ -160,9 +164,11 @@ export default class level1 extends Phaser.Scene{
 
         this.collider_player_platforms = this.physics.add.collider(player, platforms,this.handleGravityControl,undefined,this);
         
-        this.collider_player_enemies = this.physics.add.overlap(player, enemies, this.handleEnemyHit, undefined, this);
+        this.collider_player_enemies = this.physics.add.overlap(player, enemies, this.handleHit, undefined, this);
 
         this.collider_player_hazards = this.physics.add.collider(player,hazards, this.killPlayer, undefined, this);
+
+        this.collider_enemies_platforms = this.physics.add.collider(enemies, platforms);
 
         //ETC
 
@@ -276,7 +282,7 @@ export default class level1 extends Phaser.Scene{
     }
 
     //interaçoes do jogador com inimigos
-    handleEnemyHit(player, enemy){
+    handleHit(player, enemy){
         if(
             ( (player.body.y + player.body.height - 10) > enemy.body.y && !this.gravInvertida) || //inimigo acima e gravidade para baixo
             ( (player.body.y + 10) < (enemy.body.y + enemy.body.height) && this.gravInvertida) //Inimigo abaixo e gravidade para cima
@@ -289,9 +295,10 @@ export default class level1 extends Phaser.Scene{
                 //Animação de morte do inimigo
             enemies.remove(enemy); //Tira colisão do inimigo
             enemy.flipY = true; // Gira o inimigo
-            enemy.setVelocityX(0); //Pulinho
-            enemy.setVelocityY(-200);
-            enemy.setAccelerationY(1000);
+            enemy.body.setVelocityX(0); //Pulinho
+            enemy.body.setVelocityY(-200);
+            enemy.body.setAccelerationY(1000);
+            enemy.setActive(false);
             this.gravFlag++;
             player.setVelocityY(this.forcaPulo); //Pulo do player
             
@@ -303,14 +310,16 @@ export default class level1 extends Phaser.Scene{
 
         morteSound.play();
         this.physics.world.gravity.y = 1000;
-        this.input.keyboard.destroy() //Não pode se mover após a morte
+        this.input.keyboard.enabled=false //Não pode se mover após a morte
 
         player.flipY = true;
         player.flipX = true;
 
         this.collider_player_platforms.destroy(); // Não colide com nada após a morte
         this.collider_player_enemies.destroy();
-        this.collider_player_spikes.destroy(); 
+        this.collider_player_hazards.destroy(); 
+
+        this.cameras.main.setFollowOffset(3000);
         
         player.setVelocityY(-500); //Cai para baixo independente do sentido da gravidade
         playerDead = true;
