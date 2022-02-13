@@ -4,10 +4,11 @@ import game from '../main.js'
 //declaração dos objetos do jogo, variáveis globais.
 var player, playerDead = false;
 var platforms;
-var movPlatforms;
 var platformList, boundsList;
 var enemies;
 var enemyList;
+var hazards;
+var hazardsList;
 var keys;
 var spikes, spikesList;
 var morteSound;
@@ -29,6 +30,8 @@ export default class level1 extends Phaser.Scene{
         this.load.image('halphonzzo', './src/sprites/pix_player.png');
         this.load.image('tomato', './src/sprites/pix_tomato.png');
         this.load.image('espinho', './src/sprites/dungeon/PNG/Details/stalagmite2.png');
+        this.load.image('lump', './src/sprites/lump.png');
+        this.load.image('azeitona', './src/sprites/azeitona.png');
 
         //carrega sons
         this.load.audio('morte', './src/sounds/somDeMort.mp3');
@@ -40,7 +43,6 @@ export default class level1 extends Phaser.Scene{
         //adiciona sons ao jogo
         morteSound = this.sound.add('morte');
 
-
         //CRIAÇÃO DE OBJETOS
         //cria o objeto player e faz ele colidir com as bordas do mundo
         player = this.physics.add.image(25,130,'halphonzzo').setScale(0.02, 0.02);
@@ -49,10 +51,9 @@ export default class level1 extends Phaser.Scene{
 
         //cria o grupo das plataformas(dinâmico)
         platforms = this.physics.add.group();
-        movPlatforms = this.physics.add.group();
 
-        //cria o grupo dos espinhos(dinâmico)
-        spikes = this.physics.add.group();
+        //cria o grupo dos hazards(dinâmico)
+        hazards = this.physics.add.group();
         
         //Cria o grupo dos inimigos(dinâmico)
         enemies = this.add.group();
@@ -72,57 +73,75 @@ export default class level1 extends Phaser.Scene{
             platforms.add(bound, true);
         }
 
-        spikesList = [
-            {position:{x:200 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
-            {position:{x:220 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
-            {position:{x:240 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
-            {position:{x:260 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
-            {position:{x:280 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
-            {position:{x:300 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
-            {position:{x:320 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
-            {position:{x:340 ,y:300}, gravity: false, movement:"none", width:150 ,height:40},
+        hazardsList = [
+            {x:200, y:300, gravity: false, movement:"none", width:150 ,height:40, tile:'espinho'},
+            {x:220, y:300, gravity: false, movement:"none", width:150 ,height:40, tile:'espinho'},
+            {x:240, y:300, gravity: false, movement:"none", width:150 ,height:40, tile:'espinho'},
+            {x:260, y:300, gravity: false, movement:"none", width:150 ,height:40, tile:'espinho'},
+            {x:280, y:300, gravity: false, movement:"none", width:150 ,height:40, tile:'espinho'},
+            {x:300, y:300, gravity: false, movement:"none", width:150 ,height:40, tile:'espinho'},
+            {x:320, y:300, gravity: false, movement:"none", width:150 ,height:40, tile:'espinho'},
+            {x:340, y:300, gravity: false, movement:"none", width:150 ,height:40, tile:'espinho'},
         ]
 
-        for(const spikeConfig of spikesList){
-            const spike = this.add.image(spikeConfig.position.x,spikeConfig.position.y,'espinho');
-            spike.position = spikeConfig.position;
-            spike.movement = spikeConfig.movement;
-            spikes.add(spike, true);
+        for(const hazardConfig of hazardsList){
+            const hazard = this.add.image(spikeConfig.x,spikeConfig.y,hazardConfig.tile);
+            hazard.position.x = hazardConfig.x;
+            hazard.position.y = hazardConfig.y;
+            hazard.movement = hazardConfig.movement;
+            hazards.add(hazard, true);
         }
-        spikes.getChildren().forEach(function(spike){
+
+        hazards.getChildren().forEach(function(spike){
             spike.body.setAllowGravity(false);
             spike.body.setSize(25,48);
             spike.body.setOffset(20,8);
             spike.body.setImmovable(true);
         })
 
-        
-        this.time.now 
-
         enemyList=[
-            {position:{x:200, y:175}, gravity:false, movement: "horizontal", stateTime: 2000, speed:75}
+            {x:200, y:175, gravity:false, movement: "horizontal", stateTime: 2000, speed:75}
         ]
 
         //LISTA DE INIMIGOS (50%) E PLATAFORMAS (100%)
         for(const enemyConfig of enemyList){
-            const enemy = this.physics.add.image(enemyConfig.position.x, enemyConfig.position.y, 'tomato');
-            enemy.body.setAllowGravity(enemyConfig.gravity);
-            enemy.position = enemyConfig.position;
-            enemy.movement = enemyConfig.movement;
-            enemy.stateTime = enemyConfig.stateTime;
-            enemies.add(enemy, true);
+            let enemy;
+            let behavior;
+            switch (enemyConfig.type){
+                case 'azeitona':
+                    enemy = new Azeitona(this, enemyConfig.x, enemyConfig.y, 'azeitona', enemyConfig.stateTime);
+
+                    behavior = this.time.addEvent({loop: true, delay: enemy.stateTime, callbackScope: this, callback: function(){
+                        if(enemy.active){
+                            enemies.add(enemy.shoot());
+                        }}, args:[enemy]});
+                        enemies.add(enemy);
+                    break;
+                        
+                case 'tomate':
+                    enemy = new Tomate(this, enemyConfig.x, enemyConfig.y, 'tomate', enemyConfig.movement, enemyConfig.speed, enemyConfig.stateTime);
+                    
+                    behavior = this.time.addEvent({loop: true, delay: enemy.stateTime, callbackScope: this, callback: function(){
+                        if(enemy.active){
+                            enemy.turn();
+                        }}, args:[enemy]});
+                        enemies.add(enemy);
+                    break;
+
+                }
         }
 
         platformList=[
             //{position:{x:300, y:30}, movement:"none"},
             //{position:{x:350, y:200}, movement:"vertical", positionDelta:80},
-            {position:{x:400, y:200}, movement:"horizontal", positionDelta:150},
+            {x:400, y:200, movement:"horizontal", positionDelta:150},
             //{position:{x:200, y:150}, movement:"circle", positionDelta:100}
         ]
 
         for(const platformConfig of platformList){
             const platform = this.physics.add.sprite(platformConfig.position.x, platformConfig.position.y, 'chao');
-            platform.position = platformConfig.position;
+            platform.position.x = platformConfig.x;
+            platform.position.y = platformConfig.y;
             platform.movement = platformConfig.movement;
             platform.positionDelta = platformConfig.positionDelta;
             platform.setScale(10,1);
@@ -143,7 +162,7 @@ export default class level1 extends Phaser.Scene{
         
         this.collider_player_enemies = this.physics.add.overlap(player, enemies, this.handleEnemyHit, undefined, this);
 
-        this.collider_player_spikes = this.physics.add.collider(player,spikes, this.killPlayer,undefined,this);
+        this.collider_player_hazards = this.physics.add.collider(player,hazards, this.killPlayer, undefined, this);
 
         //ETC
 
