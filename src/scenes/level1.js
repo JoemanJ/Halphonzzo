@@ -184,6 +184,7 @@ export default class level1 extends Phaser.Scene{
         this.cameras.main.setBounds(0, 0, 1000, 150)
         this.cameras.main.setDeadzone(0, 0);
         this.cameras.main.setZoom(2);
+
     }
 
     
@@ -383,14 +384,4 @@ export default class level1 extends Phaser.Scene{
 
     }
 
-    invertGravity(){
-        this.physics.world.gravity.y *= -1;
-        this.gravInvertida = !this.gravInvertida;
-        this.gravFlag = false;
-        this.forcaPulo *= -1;
-        this.player.flipY = !this.player.flipY;
-        this.enemies.getChildren().forEach(function(enemy){
-            enemy.flipY=!enemy.flipY;
-        })
-    }
 }
